@@ -19,7 +19,7 @@ A two-step e-mail registration is required to get an account and an API key.
 Format specification:
 
  - Request URL: `https://api.xrtc.org/v1/auth/registrationstart`
- - Request body raw: 
+ - Request body raw:
    - First request, sends code by email: `{"email":"yourname@validemail.com"}`
    - Re-send code: `{"email":"yourname@validemail.com", "registrationtoken":"abcdefghijklmopqrstu-1234567890"}`
  - Response: `{"registrationtoken":"abcdefghijklmopqrstu-1234567890"}`
@@ -29,7 +29,7 @@ Format specification:
    - INVALID_EMAIL = 32 (non-existent email address)
    - MAX_CONCURRENT_REGISTRATIONS = 40 (registration tried too many times over a period of time, try again later)
    - MAX_CODE_SEND	= 41 (code has been re-sent too many times or too frequently, try again later)
-    
+
 **Step 2**: The generated registration token and the email code have to be provided within 5 minutes to obtain an account and an API key
 
 Format specification:
@@ -44,7 +44,7 @@ Format specification:
    - MAX_CODE_RETRY = 42 (wrong code typed 3 times, start registration from scratch)
    - TIMEOUT_CODE = 43 (user was too slow to type the code, it expired. Start registration from scratch)
 
-A new account is created together with the first API key. For an exisiting account, a new API key is added. There can be up to the maximum of API_KEY_COUNT_MAX used in parallel. Beyond this limit, the oldest API is overwitten by a new one. Key time validity is indefinite, but if the key is not used for longer than API_KEY_AGE_MAX, it is disabled. Save API keys securely. 
+A new account is created together with the first API key. For an exisiting account, a new API key is added. There can be up to the maximum of API_KEY_COUNT_MAX used in parallel. Beyond this limit, the oldest API is overwitten by a new one. Key time validity is indefinite, but if the key is not used for longer than API_KEY_AGE_MAX, it is disabled. Save API keys securely.
 
  - Account id format (string): AC followed by a long number, e.g. AC0987654321012345
  - API key format (string): ASCII alphanumeric strings 32 characters long generated per FIPS-140-2 standard (~200 bit entropy)
@@ -86,7 +86,7 @@ Format specification:
    - INPUT_BINARYJSON_PARSE_FAIL = 20 (wrong argument names, unescaped strings, brackets mismatch, MAX_PAYLOAD_SIZE exceeded)
    - INVALID_ARGUMENTS = 30 (wrong argument values)
    - SESSION_INVALIDATED	= 10011 (HTTP status code 401, "Server session denied" meaning wrong or expired [JSESSIONID cookie](#conventions))
-   
+
 ## Get item
 
 Input: array of portals with the reference timestamp `{portals:[{"portalid":"1234567890"}]}`
@@ -95,28 +95,28 @@ Output: returns array of items `{"portalid":"abc", "payload":"xxx", "servertimes
 
 The input logic what to get:
 
- - `portalid`: 
-   - if you provide an empty list `{portals:[]}` or null `{portals:null}`, it returns the latest data for _all_ portals of this `accountid`. 
+ - `portalid`:
+   - if you provide an empty list `{portals:[]}` or null `{portals:null}`, it returns the latest data for _all_ portals of this `accountid`.
      - *This is useful to list of portals of this account and to check the lastest data in each of them for monitoring*
      - *If specific portals are not provided,* **none** *of the additional parameters are effective if specific portals are not provided*
-   - if you provide one or several portals `{portals:[{"portalid":"abc111},{...}]}`, it returns the latest data for _the specified_ portals, since the last get item request within this login session. 
+   - if you provide one or several portals `{portals:[{"portalid":"abc111},{...}]}`, it returns the latest data for _the specified_ portals, since the last get item request within this login session.
      - *If specific portals are provided, additional parameters `mode`, `schedule`, `cutoff` can be used to fine tune the behavior*
 
   - `mode`:
-    - `probe` (default) checks the latest data and returns imediately. If the data is not available, it returns an empty json. 
+    - `probe` (default) checks the latest data and returns imediately. If the data is not available, it returns an empty json.
       - *This mode is useful for occasional monitoring if there is anything new in a portal without waiting*
-    - `watch` checks the latest data, and if it is not available, waits for it (in any of the portals) and then immediately returns. If the data is not available after GET_ITEM_TIMEOUT, it returns an empty json. 
+    - `watch` checks the latest data, and if it is not available, waits for it (in any of the portals) and then immediately returns. If the data is not available after GET_ITEM_TIMEOUT, it returns an empty json.
       - *This mode is useful for geting new data from a portal without complexities of streaming*
     - `stream` same as `watch`, but after returning one data it does not close the request and will keep waiting for new data and returning it continuisly, separated by `\n`, until GET_ITEM_TIMEOUT.
       - *This mode is useful for continuous data streaming*
       - *The use of an SDK is recommended (e.g. Python) because streaming functionality is technically not possible to use with Curl or Postman*
-  
+
   - `schedule`:  
-    - LIFO (default), defines delivery of the latest data first. Some older data can be skipped if newer data arrives, but both the newer and the older data do not fit the maximum overal size of the serialized json (see below). 
+    - LIFO (default), defines delivery of the latest data first. Some older data can be skipped if newer data arrives, but both the newer and the older data do not fit the maximum overal size of the serialized json (see below).
     - FIFO, defines delivery of the oldest data first. The desire is to bring all data without ommitions, but pay attention that if the set item rate exceeds the get item rate, the circular buffer will overrun and thus start overwriting the oldest items.
-  
-  - `cutoff`: 
-    - defines time in ms for the maximum relative age of the items, default -1 (no effect). 
+
+  - `cutoff`:
+    - defines time in ms for the maximum relative age of the items, default -1 (no effect).
       - *This is useful to discard old items*
 
 The output logic what to get: if any of the following limits are exceeded, the exceeding items will be ignored (the oldest items are ignored for LIFO schedule, the latest items are ignored for FIFO schedule):
@@ -139,14 +139,14 @@ Format specification:
    - SESSION_INVALIDATED	= 10011 (HTTP status code 401, "Server session denied" meaning wrong or expired [JSESSIONID cookie](#conventions))
 
 ## Conventions
- - Encoding: portalid ASCII alphanumeric, payload UTF-8 (binary can be transmitted as Base64)
+ - Encoding: `portalid` ASCII alphanumeric, `payload` UTF-8 (binary can be transmitted as Base64)
  - Request type: all HTTP requests are POST type
  - Timestamps: UNIX time in milliseconds UTC
  - URL format: `https://api.xrtc.org/v1/...`
  - Ping URL (icmp): `ping.xrtc.org`
  - Versioning: only major (not backward compatible) version is used as `.../v1/...`
  - Cookies: `JSESSIONID` and `AWSALBAPP-0` cookies must be supplied to each request other than registration or login
- - Endpoint limits: 
+ - Endpoint limits:
    - API_KEY_COUNT_MAX = 10
    - API_KEY_AGE_MAX = 3 months
    - PORTALS_COUNT_MAX = 10
